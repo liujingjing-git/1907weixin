@@ -1,0 +1,215 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use App\Tools\Wechat;
+use App\Tools\Curl;
+use App\Model\MediaModel;
+use App\Model\ChannelModel;
+use App\Model\WechatUser;
+
+class WeixinController extends Controller
+{
+    private  $student = ['张艺兴','陈伟霆','张若昀','郭麒麟','任嘉伦','王一博','肖战'];
+    
+
+    public function index(Request $request)
+    {
+        // echo $request->input('echostr');die;
+
+
+        $xml = file_get_contents("php://input");//接收原始的xml和json数据
+        file_put_contents("log.txt","\n\n".$xml."\n",FILE_APPEND);//写到文件中
+        $xmlObj=simplexml_load_string($xml);//方便处理xml对象
+
+        //下载图片素材
+        $media_id = $xmlObj->MediaId;
+        if($xmlObj->MsgType=='image')  //图片
+        {
+            //下载图片
+            $this->downloadImg($media_id);
+        }elseif($xmlObj->MsgType=='video')  //视频
+        {  
+            //下载视频
+            $this->downloadVideo($media_id);
+        }   
+
+
+        /*用户关注时*/
+        if($xmlObj->MsgType == "event" && $xmlObj->Event == "subscribe"){
+            //关注时获取用户信息
+            $access_token = Wechat::getAccessToken();
+            //存储方式  SQL  cookie  session  redis  memcahe  file
+            $data = Wechat::getUserInfoByOpenId($xmlObj->FromUserName);
+            //得到渠道标识
+            $c_status = $data['qr_scene_str'];
+            //根据聚到标识 得到人数递增
+            ChannelModel::where(['c_status'=>$c_status])->increment('c_num');
+            
+            $user_data = WechatUser::where(['openid'=>$xmlObj->FromUserName])->first();
+            if($user_data){
+                WechatUser::where(['openid'=>$xmlObj->FromUserName])->update(['is_del'=>0,'c_status'=>$c_status]);
+            }else{
+                $sql = WechatUser::create([
+                    'openid' => $data['openid'],
+                    'sex' => $data['sex'],
+                    'nickname' => $data['nickname'],
+                    'city' => $data['city'],
+                    'add_time' => $data['subscribe_time'],
+                    'c_status' => $c_status,
+                ]);
+            }
+            $nickname = $data['nickname']; //取到用户昵称
+            $msg = "欢迎".$nickname."关注";
+
+            //回复文本消息
+            Wechat::reponseText($xmlObj,$msg);
+        }
+
+        /*取消关注时候*/
+        if($xmlObj->MsgType == "event" && $xmlObj->Event == "unsubscribe"){
+            $userdata = WechatUser::where(['openid'=>$xmlObj->FromUserName])->update(['is_del'=>1]);
+            //查询用户信息表
+            $user_data = WechatUser::where(['openid'=>$xmlObj->FromUserName])->first();
+            //获取表示
+            $c_status = $user_data['c_status'];
+            ChannelModel::where(['c_status'=>$c_status])->decrement('c_num');
+        }
+      
+        //用户发送消息时
+        if($xmlObj->MsgType=='text'){
+            $content = trim($xmlObj->Content);
+            if($content=='1'){
+                //回复全部姓名
+                $msg = implode(",",$this->student);
+                //回复用户文本消息
+                Wechat::reponseText($xmlObj,$msg);
+            }elseif($content=='2'){
+                //随机回复一个同学
+                shuffle($this->student);
+                $msg = $this->student[0];
+                //回复用户文本消息
+                Wechat::reponseText($xmlObj,$msg);
+            }elseif(mb_strpos($content,"天气") !== false){  //城市名字+天气
+                //回复天气
+                $city = trim($content,"天气");
+                if(empty($city)){
+                    $city="北京";
+                }
+        
+                //调用k780天气接口  获取数据
+                $url = "http://api.k780.com/?app=weather.future&weaid=".$city."&&appkey=47877&sign=a04ca21de735d770272b1c64a5c19a51&format=json";
+                $data = file_get_contents($url);
+                $data = json_decode($data,true); 
+                
+                if($data['success']==0){
+                        echo "暂无城市信息";die;
+                 }elseif($data['success']==1){
+                    $msg = "";
+                    foreach ($data['result'] as $key => $value) {
+                        $msg .= $value['days']." ".$value['week']." ".$value['citynm']." ".$value['temperature']."\n";
+                    }
+                    Wechat::reponseText($xmlObj,$msg);
+                }else{
+                    $msg = $xmlObj->Content;
+                    Wechat::reponseText($xmlObj,$msg);
+                }
+
+            }               
+        }  
+        
+        //当用户发送图时
+        if($xmlObj->MsgType=='image'){
+            $where = ['media_format'=>'image'];
+            $rand = MediaModel::inRandomOrder()->where($where)->first()->toArray();
+            $MediaId = $rand['wechat_media_id'];
+        
+            //随机回复图片
+            echo "<xml>
+                <ToUserName><![CDATA[".$xmlObj->FromUserName."]]></ToUserName>
+                <FromUserName><![CDATA[".$xmlObj->ToUserName."]]></FromUserName>
+                <CreateTime>".time()."</CreateTime>
+                <MsgType><![CDATA[image]]></MsgType>
+                <Image>
+                    <MediaId><![CDATA[".$MediaId."]]></MediaId>
+                </Image>
+            </xml>";
+        }  
+
+        
+    }
+
+    /*下载图片素材*/
+    protected function downloadImg($media_id)
+    {
+        $access_token = Wechat::getAccessToken();
+        $url = "https://api.weixin.qq.com/cgi-bin/media/get?access_token=".$access_token."&media_id=".$media_id;
+
+        //请求获取素材接口
+        $img = file_get_contents($url);
+        //保存图片
+        file_put_contents('haha.jpg',$img);
+    }
+
+    //下载视频素材
+    protected function downloadVideo($media_id)
+    {
+        $access_token = Wechat::getAccessToken();
+        $url = "https://api.weixin.qq.com/cgi-bin/media/get?access_token=".$access_token."&media_id=".$media_id;
+
+        //请求获取素材接口
+        $img = file_get_contents($url);
+       
+        //保存视频
+        $file_name = date("Ymd-His").rand(1111,9999).'.mp4';
+        $res = file_put_contents($file_name,$img);
+        var_dump($res);
+    }
+
+
+    /*自定义菜单*/
+    public function createMenu(){
+        echo date('Y-m-d H:i:s');
+        //调用接口路径
+        $access_token = Wechat::getAccessToken();
+        $url = "https://api.weixin.qq.com/cgi-bin/menu/create?access_token=".$access_token;
+        // echo $url;die;
+        
+        $postData =[
+            "button" => [
+                [
+                    "type" => "click",
+                    "name" => "点这里❤",
+                    "key" => "hahaha"
+                ],
+                [
+                   "name" => "嘿这里❤",
+                   "sub_button" => [
+                        [
+                            "type"  => "scancode_push",
+                            "name"  => "扫一扫",
+                            "key"   => "scan111"
+                        ],
+                        [
+                            "type"  => "pic_sysphoto",
+                            "name"  => "变好看",
+                            "key"   => "photo111"
+                        ],
+                        [
+                            "type" => "view",
+                            "name" => "搜一下",
+                            "url" => "https://www.sogou.com/"
+                        ]
+                    ]
+                ],
+            ]
+        ];
+        $postData = json_encode($postData,JSON_UNESCAPED_UNICODE);
+        $res = Curl::post($url,$postData);
+        $res = json_decode($res,true);
+        dd($res);
+    }
+
+ }
