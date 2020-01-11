@@ -9,7 +9,7 @@ class IndexController extends Controller
 {
     /*项目自动上线*/
     public function index(){
-       $cmd = "cd /data/wwwroot/default/1907weixin && git pull";
+       $cmd = "cd /data/wwwroot/default/1907weixin && git pull";    //
        shell_exec($cmd);
     }
 }
