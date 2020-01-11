@@ -42,9 +42,8 @@ Route::prefix('admin/')->group(function(){
     Route::any('chart','Admin\ChannelController@chart');//渠道图表
     
     Route::any('createMenu','Admin\WeixinController@createMenu');//自定义菜单栏
-    
-    Route::any('sendAllByOpenId','Admin\WeixinController@sendAllByOpenId');//根据openid群发事件
-    
+        
+    Route::any('sendAllByOpenId','Admin\WeixinController@sendAllByOpenId');//项目自动上线
     
 
     Route::any('uploadMedia','Admin\MediaController@uploadMedia');//测试
@@ -58,5 +57,4 @@ Route::prefix('weixin/')->group(function(){
     Route::any('wx','Admin\NewsController@wx');//微信
 });
 
-
-
+Route::any('/gitpull','Git\IndexController@index');//项目自动上线
