@@ -27,7 +27,7 @@
                 @if($v['media_format']=='image')
                     <img src="\{{$v['media_url']}}" width="100px">
                 @elseif($v['media_format']=='voice')
-                    <audio src="\{{$v['media_url']}}" controls="controls" width="200px"></audio>
+                    <audio src="\{{$v['media_url']}}" controls="controls" width="100px"></audio>
                 @elseif($v['media_format']=='video')
                     <video src="\{{$v['media_url']}}" controls="controls" width="100px"></video>
                 @endif

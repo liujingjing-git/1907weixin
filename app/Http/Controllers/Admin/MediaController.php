@@ -12,8 +12,8 @@ class MediaController extends Controller
 {
     //素材添加
     public function add(){
-        // $access_token = Wechat::getAccessToken();
-        // echo $access_token;die;//获取access_token
+        $access_token = Wechat::getAccessToken();
+        echo $access_token;die;//获取access_token
         
         return view('media.add');
     }

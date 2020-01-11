@@ -43,6 +43,9 @@ Route::prefix('admin/')->group(function(){
     
     Route::any('createMenu','Admin\WeixinController@createMenu');//自定义菜单栏
     
+    Route::any('sendAllByOpenId','Admin\WeixinController@sendAllByOpenId');//根据openid群发事件
+    
+    
 
     Route::any('uploadMedia','Admin\MediaController@uploadMedia');//测试
     Route::any('createdo','Admin\MediaController@createdo');//测试2

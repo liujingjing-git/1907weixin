@@ -209,7 +209,35 @@ class WeixinController extends Controller
         $postData = json_encode($postData,JSON_UNESCAPED_UNICODE);
         $res = Curl::post($url,$postData);
         $res = json_decode($res,true);
-        dd($res);
+        var_dump($res);
     }
 
- }
+    /*根据openid群发事件*/
+    public function sendAllByOpenId(){
+
+        $users = WechatUser::select('openid')->get()->toArray();
+        $openid_list = array_column($users,'openid');
+        $access_token = Wechat::getAccessToken();
+        
+        $msg = date("Y-m-d H:i:s")."想带一人，回云深不知处，带回去，藏起来。——《陈情令》";
+
+        $postData = [
+            "touser" => $openid_list,
+            "msgtype" => "text",
+            "text" => [
+                "content" => $msg
+            ]
+        ];
+
+        $url = "https://api.weixin.qq.com/cgi-bin/message/mass/send?access_token=".$access_token;
+        $response = Curl::post($url,json_encode($postData,JSON_UNESCAPED_UNICODE));
+        // echo '<pre>';print_r($response);echo '</pre>';die;
+        $res = json_decode($response,true);
+        // var_dump($res);die;
+        if($res['errcode']>0){
+            echo '错误信息:'.$res['errmsg'];
+        }else{
+            echo "发送成功";
+        }
+    }   
+}
