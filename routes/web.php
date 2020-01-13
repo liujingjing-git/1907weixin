@@ -58,3 +58,6 @@ Route::prefix('weixin/')->group(function(){
 });
 
 Route::any('/gitpull','Git\IndexController@index');//项目自动上线
+
+Route::any('wx/test','Admin\WeixinController@test');//微信网页授权
+Route::any('wx/auth','Admin\WeixinController@auth');//

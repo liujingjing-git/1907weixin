@@ -240,4 +240,13 @@ class WeixinController extends Controller
             echo "发送成功";
         }
     }   
+
+    /*微信网页授权*/
+    public function test()
+    {
+        $appid = env('WX_APPID');
+        $redirect_uri = urlencode(env('WX_AUTH_REDIRECT_URI'));
+        $url = "https://open.weixin.qq.com/connect/oauth2/authorize?appid=".$appid."&redirect_uri=".$redirect_uri."&response_type=code&scope=snsapi_userinfo&state=STATE#wechat_redirect";
+        echo $url;
+    }
 }
