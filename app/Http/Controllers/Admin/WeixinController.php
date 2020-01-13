@@ -250,6 +250,7 @@ class WeixinController extends Controller
         echo $url;
     }
 
+    /*获取微信授权code*/
     public function auth()
     {
         //接收code
@@ -258,6 +259,13 @@ class WeixinController extends Controller
         $url = "https://api.weixin.qq.com/sns/oauth2/access_token?appid=".env('WX_APPID')."&secret=".env('WX_APPSECRET')."&code=".$code."&grant_type=authorization_code";
         $json_data = file_get_contents($url);
         $arr = json_decode($json_data,true);
-        print_r($arr);
-    }
+        echo '<pre>';print_r($arr);echo '</pre>';
+
+
+        //获取用户信息
+        $url = "https://api.weixin.qq.com/sns/userinfo?access_token=".$arr['access_token']."&openid=".$arr['openid']."&lang=zh_CN";
+        $json_user_info = file_get_contents($url);
+        $user_info_arr = json_decode($json_user_info,true);
+        echo '<pre>';print_r($user_info_arr);echo '</pre>';
+    }   
 }
