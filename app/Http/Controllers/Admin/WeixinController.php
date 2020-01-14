@@ -19,8 +19,8 @@ class WeixinController extends Controller
     public function index(Request $request)
     {
         // echo $request->input('echostr');die;
-        $echostr = $_GET['echostr'];
-        echo $echostr;die;
+        // $echostr = $_GET['echostr'];
+        // echo $echostr;die;
 
         $xml = file_get_contents("php://input");//接收原始的xml和json数据
         file_put_contents("log.txt","\n\n".$xml."\n",FILE_APPEND);//写到文件中
