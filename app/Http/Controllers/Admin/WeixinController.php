@@ -184,7 +184,7 @@ class WeixinController extends Controller
                 [
                     "type" => "view",
                     "name" => "签到❤",
-                    "key" => "https://open.weixin.qq.com/connect/oauth2/authorize?appid=wx09d1d54ef09170a9&redirect_uri=http%3A%2F%2F1905liujingjing.comcto.com%2Fwx%2Fauth&response_type=code&scope=snsapi_userinfo&state=STATE#wechat_redirect"
+                    "url" => "https://open.weixin.qq.com/connect/oauth2/authorize?appid=wx09d1d54ef09170a9&redirect_uri=http%3A%2F%2F1905liujingjing.comcto.com%2Fwx%2Fauth&response_type=code&scope=snsapi_userinfo&state=STATE#wechat_redirect"
                 ],
                 [
                    "name" => "点这里❤",
@@ -292,6 +292,9 @@ class WeixinController extends Controller
         foreach($user_list as $k=>$v){
             $key = 'h:user_info:'.$v;
             $u = Redis::hGetAll($key);
+            if(empty($u)){
+                continue;
+            }
             // echo '<pre>';print_r($u);echo '</pre>';
             echo "<img src='".$u['headimgurl']."'>";
         }
