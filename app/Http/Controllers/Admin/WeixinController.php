@@ -279,6 +279,7 @@ class WeixinController extends Controller
         $redis_key = 'checkin:'.date('Y-m-d');
         Redis::Zadd($redis_key,time(),$user_info_arr['openid']);  //将openid加入有序集合中
         echo $user_info_arr['nickname']."签到成功"."签到时间:".date("Y-m-d H:i:s");
+        echo '<br>';
 
         $user_list = Redis::zrange($redis_key,0,-1);
 
