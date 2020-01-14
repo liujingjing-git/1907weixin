@@ -9,7 +9,7 @@ use App\Tools\Curl;
 use App\Model\MediaModel;
 use App\Model\ChannelModel;
 use App\Model\WechatUser;
-use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Redis;
 
 class WeixinController extends Controller
 {
