@@ -174,9 +174,6 @@ class WeixinController extends Controller
         }
     }
     
-    
-    
-    
     /*自定义菜单*/
     public function createMenu(){
         echo date('Y-m-d H:i:s');

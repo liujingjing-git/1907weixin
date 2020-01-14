@@ -121,3 +121,12 @@
 <Content><![CDATA[略略略]]></Content>
 <MsgId>22605898812240594</MsgId>
 </xml>
+
+
+<xml><ToUserName><![CDATA[gh_85f26cbaf766]]></ToUserName>
+<FromUserName><![CDATA[ovh231S5UOQ3o5OLx1ETDYFyjqeo]]></FromUserName>
+<CreateTime>1579003702</CreateTime>
+<MsgType><![CDATA[text]]></MsgType>
+<Content><![CDATA[霍山石斛盛世回首略]]></Content>
+<MsgId>22605898812240594</MsgId>
+</xml>
