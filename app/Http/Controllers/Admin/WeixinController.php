@@ -9,6 +9,7 @@ use App\Tools\Curl;
 use App\Model\MediaModel;
 use App\Model\ChannelModel;
 use App\Model\WechatUser;
+use App\Model\TypeModel;
 use Illuminate\Support\Facades\Redis;
 
 class WeixinController extends Controller
@@ -28,15 +29,39 @@ class WeixinController extends Controller
 
         //下载图片素材
         $media_id = $xmlObj->MediaId;
+        $msgtype = $xmlObj->MsgType;
+        $openid = $xmlObj->FromUserName;
+        
         if($xmlObj->MsgType=='image')  //图片
-        {
-            //下载图片
-            $this->downloadImg($media_id);
+        {   //下载图片
+            $this->getMedia($media_id,$msgtype);
+            $where = ['media_format'=>'image'];
+            $rand = MediaModel::inRandomOrder()->where($where)->first()->toArray();
+            $MediaId = $rand['wechat_media_id'];
+            //随机回复图片
+            echo "<xml>
+                <ToUserName><![CDATA[".$xmlObj->FromUserName."]]></ToUserName>
+                <FromUserName><![CDATA[".$xmlObj->ToUserName."]]></FromUserName>
+                <CreateTime>".time()."</CreateTime>
+                <MsgType><![CDATA[image]]></MsgType>
+                <Image>
+                    <MediaId><![CDATA[".$MediaId."]]></MediaId>
+                </Image>
+            </xml>";
         }elseif($xmlObj->MsgType=='video')  //视频
-        {  
-            //下载视频
-            $this->downloadVideo($media_id);
-        }   
+        {   //下载视频
+            $this->getMedia($media_id,$msgtype);
+        }elseif($xmlObj->MsgType=='voice'){
+            //下载语音
+            $this->getMedia($media_id,$msgtype); //语音
+        }elseif($xmlObj->MsgType=='text'){      //文本
+            $type = $xmlObj->Content;
+            $arr = [
+                'type' => $type,
+                'openid' => $openid
+            ];
+            TypeModel::create($arr);
+        }  
 
 
         /*用户关注时*/
@@ -124,53 +149,34 @@ class WeixinController extends Controller
         
         //当用户发送图时
         if($xmlObj->MsgType=='image'){
-            $where = ['media_format'=>'image'];
-            $rand = MediaModel::inRandomOrder()->where($where)->first()->toArray();
-            $MediaId = $rand['wechat_media_id'];
-        
-            //随机回复图片
-            echo "<xml>
-                <ToUserName><![CDATA[".$xmlObj->FromUserName."]]></ToUserName>
-                <FromUserName><![CDATA[".$xmlObj->ToUserName."]]></FromUserName>
-                <CreateTime>".time()."</CreateTime>
-                <MsgType><![CDATA[image]]></MsgType>
-                <Image>
-                    <MediaId><![CDATA[".$MediaId."]]></MediaId>
-                </Image>
-            </xml>";
         }  
-
-        
     }
 
-    /*下载图片素材*/
-    protected function downloadImg($media_id)
-    {
+    /*素材*/
+    protected function getMedia($media_id,$msgtype){
         $access_token = Wechat::getAccessToken();
         $url = "https://api.weixin.qq.com/cgi-bin/media/get?access_token=".$access_token."&media_id=".$media_id;
-
         //请求获取素材接口
-        $img = file_get_contents($url);
-        //保存图片
-        file_put_contents('haha.jpg',$img);
+        $media = file_get_contents($url);
+ 
+        if($msgtype=='image'){  //图片
+            $file_name = date("YmdHis").rand(1111,9999).'.jpg';
+            $file = "wx/imgs/".$file_name;;
+            $res = file_put_contents($file,$media);
+        }elseif($msgtype=='video'){  //视频
+            $file_name = date("YmdHis").rand(1111,9999).'.mp4';
+            $file = "wx/video/".$file_name;
+            $res = file_put_contents($file,$media);
+        }elseif($msgtype=='voice'){     //语音
+            $file_name = date("YmdHis").rand(1111,9999).'.amr';
+            $file = "wx/voice/".$file_name;;
+            $res = file_put_contents($file,$media);
+        }
     }
-
-    //下载视频素材
-    protected function downloadVideo($media_id)
-    {
-        $access_token = Wechat::getAccessToken();
-        $url = "https://api.weixin.qq.com/cgi-bin/media/get?access_token=".$access_token."&media_id=".$media_id;
-
-        //请求获取素材接口
-        $img = file_get_contents($url);
-       
-        //保存视频
-        $file_name = date("Ymd-His").rand(1111,9999).'.mp4';
-        $res = file_put_contents($file_name,$img);
-        var_dump($res);
-    }
-
-
+    
+    
+    
+    
     /*自定义菜单*/
     public function createMenu(){
         echo date('Y-m-d H:i:s');
