@@ -9,6 +9,7 @@ use App\Tools\Curl;
 use App\Model\MediaModel;
 use App\Model\ChannelModel;
 use App\Model\WechatUser;
+use Illuminte\Support\Facades\Redis;
 
 class WeixinController extends Controller
 {
@@ -180,12 +181,12 @@ class WeixinController extends Controller
         $postData =[
             "button" => [
                 [
-                    "type" => "click",
-                    "name" => "点这里❤",
-                    "key" => "hahaha"
+                    "type" => "view",
+                    "name" => "签到❤",
+                    "key" => "https://open.weixin.qq.com/connect/oauth2/authorize?appid=wx09d1d54ef09170a9&redirect_uri=http%3A%2F%2F1905liujingjing.comcto.com%2Fwx%2Fauth&response_type=code&scope=snsapi_userinfo&state=STATE#wechat_redirect"
                 ],
                 [
-                   "name" => "嘿这里❤",
+                   "name" => "点这里❤",
                    "sub_button" => [
                         [
                             "type"  => "scancode_push",
@@ -244,6 +245,8 @@ class WeixinController extends Controller
     /*微信网页授权*/
     public function test()
     {
+        $redis_key = 'checkin:'.date('Y-m-d');
+        // echo $redis_key;die;
         $appid = env('WX_APPID');
         $redirect_uri = urlencode(env('WX_AUTH_REDIRECT_URI'));
         $url = "https://open.weixin.qq.com/connect/oauth2/authorize?appid=".$appid."&redirect_uri=".$redirect_uri."&response_type=code&scope=snsapi_userinfo&state=STATE#wechat_redirect";
@@ -267,5 +270,10 @@ class WeixinController extends Controller
         $json_user_info = file_get_contents($url);
         $user_info_arr = json_decode($json_user_info,true);
         echo '<pre>';print_r($user_info_arr);echo '</pre>';
+
+        //实现签到功能  记录用户签到
+        $redis_key = 'checkin:'.date('Y-m-d');
+        Redis::Zadd($redis_key,time(),$user_info_arr['openid']);  //将openid加入有序集合中
+        echo $user_info_arr['nickname']."签到成功";
     }   
 }
