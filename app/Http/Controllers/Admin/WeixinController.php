@@ -269,7 +269,14 @@ class WeixinController extends Controller
         $url = "https://api.weixin.qq.com/sns/userinfo?access_token=".$arr['access_token']."&openid=".$arr['openid']."&lang=zh_CN";
         $json_user_info = file_get_contents($url);
         $user_info_arr = json_decode($json_user_info,true);
+        
+        //将用户信息保存到HASH中
+
+        $key = 'h:user_info:'.$user_info_arr['openid'];
+        Redis::hMset($key,$user_info_arr);
+
         echo '<pre>';print_r($user_info_arr);echo '</pre>';
+
 
         //实现签到功能  记录用户签到
         $redis_key = 'checkin:'.date('Y-m-d');
@@ -279,5 +286,11 @@ class WeixinController extends Controller
         $user_list = Redis::zrange($redis_key,0,-1);
         echo '<hr>';
         echo '<pre>';print_r($user_list);echo '</pre>';
+
+        foreach($user_list as $k=>$v){
+            $key = 'h:user_info:'.$v;
+            $u = Redis::hGetAll($key);
+            echo '<pre>';print_r($u);echo '</pre>';
+        }
     }   
 }
