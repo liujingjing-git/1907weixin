@@ -100,7 +100,7 @@ class WeixinController extends Controller
             $userdata = WechatUser::where(['openid'=>$xmlObj->FromUserName])->update(['is_del'=>1]);
             //查询用户信息表
             $user_data = WechatUser::where(['openid'=>$xmlObj->FromUserName])->first();
-            //获取表示
+            //获取标识
             $c_status = $user_data['c_status'];
             ChannelModel::where(['c_status'=>$c_status])->decrement('c_num');
         }

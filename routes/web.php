@@ -56,8 +56,10 @@ Route::prefix('weixin/')->group(function(){
     Route::any('index','Admin\WeixinController@index');//微信
     Route::any('wx','Admin\NewsController@wx');//微信
 });
+Route::any('login/shop','Admin\LoginController@shop');//给用户发送微信信息
+
 
 Route::any('/gitpull','Git\IndexController@index');//项目自动上线
 
 Route::any('wx/test','Admin\WeixinController@test');//微信网页授权
-Route::any('wx/auth','Admin\WeixinController@auth');//
+Route::any('wx/auth','Admin\WeixinController@auth');
